@@ -1,6 +1,6 @@
 # RPKM_DESeq2_human_mouse
 #####RPKM
-##### Set working directory and load the packages
+#####Set working directory and load the packages
 
 setwd("~/Desktop/RNAseqworkshop/data") # for the workshop where you have your data
 library(biomaRt)
@@ -11,18 +11,18 @@ library(ggplot2)
 library(Glimma)
 library(gplots)
 
-###### load the data
+######load the data
 directory <- "./" # "/path to your/files/"
 sampleFiles=grep('count',list.files(directory),value=TRUE)
 sampleFiles	
 sampleFiles=sampleFiles[order(nchar(sampleFiles),sampleFiles)]
 
-##### Read the meta data
+#####Read the meta data
 metadata=read.table("./samples.txt",header=T,sep="\t")
 head(metadata) # 
 dim(metadata)
 
-##### create a group variable
+#####create a group variable
 group=metadata$group
 
 #####create a DGElist for downstream analyses
@@ -30,17 +30,17 @@ x <- readDGE(sampleFiles,header=F,group=group)
 MetaTags
 x <- x[-MetaTags, ]
 
-##### we want to have the same name for count and metadata
+#####we want to have the same name for count and metadata
 sampleNames<-metadata$sample
 colnames(x) <- sampleNames
 x
 
-###### Get gene names from our Dataframe
+######Get gene names from our Dataframe
 gData = data.frame(gencode_id = rownames(x))
 gData$ensembl_gene_id = sub("\\.\\d+", "", gData$gencode_id)
 rownames(x)<-gData$ensembl_gene_id 
 
-##### Get gene name and biotype with BioMart
+#####Get gene name and biotype with BioMart
 ensembl = useMart("ENSEMBL_MART_ENSEMBL")
 ensembl = useDataset("mmusculus_gene_ensembl", ensembl) 
 #####For human data, do not use the line above. Use this line instead: ensembl = useEnsembl(biomart="ensembl", dataset="hsapiens_gene_ensembl")
@@ -78,20 +78,20 @@ symbol<-NewDGE[,-c(1,4:9)] # we remove the counts ! the number in parenthesis ca
 rownames(symbol)<-NewDGE[,1]
 
 
-##### recreate a new DGE list 
+#####recreate a new DGE list 
 x<-DGEList(count,genes=NewDGE[,1,drop=FALSE],group=group)
 x 
-##### now add gene annotation
+#####now add gene annotation
 x$genes$symbol<-symbol
 x
 
-##### Normalization with TMM
+#####Normalization with TMM
 x <- calcNormFactors(x, method = "TMM")
 x$samples$norm.factors
 
 
 ########## LIMMA DE analyses
-##### 1. creating design matrix and contrast
+#####1. creating design matrix and contrast
 
 design <- model.matrix(~ 0 + x$samples$group)
 design
@@ -99,7 +99,7 @@ design
 colnames(design) <- levels(x$samples$group)
 design
 
-##### 2. VOOM
+#####2. VOOM
 v_norm=voom(x,design,plot=T)
 v_norm
 v_norm1=v_norm$E
