@@ -17,33 +17,33 @@ sampleFiles=grep('count',list.files(directory),value=TRUE)
 sampleFiles	
 sampleFiles=sampleFiles[order(nchar(sampleFiles),sampleFiles)]
 
-# Read the meta data
+##### Read the meta data
 metadata=read.table("./samples.txt",header=T,sep="\t")
 head(metadata) # 
 dim(metadata)
 
-# create a group variable
+##### create a group variable
 group=metadata$group
 
-#create a DGElist for downstream analyses
+#####create a DGElist for downstream analyses
 x <- readDGE(sampleFiles,header=F,group=group)
 MetaTags
 x <- x[-MetaTags, ]
 
-## we want to have the same name for count and metadata
+##### we want to have the same name for count and metadata
 sampleNames<-metadata$sample
 colnames(x) <- sampleNames
 x
 
-## Get gene names from our Dataframe
+###### Get gene names from our Dataframe
 gData = data.frame(gencode_id = rownames(x))
 gData$ensembl_gene_id = sub("\\.\\d+", "", gData$gencode_id)
 rownames(x)<-gData$ensembl_gene_id 
 
-# Get gene name and biotype with BioMart
+##### Get gene name and biotype with BioMart
 ensembl = useMart("ENSEMBL_MART_ENSEMBL")
 ensembl = useDataset("mmusculus_gene_ensembl", ensembl) 
-##For human data, do not use the line above. Use this line instead: ensembl = useEnsembl(biomart="ensembl", dataset="hsapiens_gene_ensembl")
+#####For human data, do not use the line above. Use this line instead: ensembl = useEnsembl(biomart="ensembl", dataset="hsapiens_gene_ensembl")
 View(listAttributes(ensembl))
 View(listFilters(ensembl))
 
@@ -63,11 +63,11 @@ mart <- mart[!duplicated(mart$external_gene_name),]
 dim(mart)
 head(mart)
 
-#Make gene length file
+#####Make gene length file
 length<-data.frame(mart$end_position - mart$start_position)
 write.csv(length,file="length.csv")
 
-# merging your annotation with your DGE list count (x$counts)
+#####merging your annotation with your DGE list count (x$counts)
 NewDGE<-merge(mart,x$counts,by.x="ensembl_gene_id",by.y="row.names") ##
 
 head(NewDGE)
@@ -78,20 +78,20 @@ symbol<-NewDGE[,-c(1,4:9)] # we remove the counts ! the number in parenthesis ca
 rownames(symbol)<-NewDGE[,1]
 
 
-#### recreate a new DGE list 
+##### recreate a new DGE list 
 x<-DGEList(count,genes=NewDGE[,1,drop=FALSE],group=group)
 x 
-## now add gene annotation
+##### now add gene annotation
 x$genes$symbol<-symbol
 x
 
-### Normalization with TMM
+##### Normalization with TMM
 x <- calcNormFactors(x, method = "TMM")
 x$samples$norm.factors
 
 
 ########## LIMMA DE analyses
-#### 1. creating design matrix and contrast
+##### 1. creating design matrix and contrast
 
 design <- model.matrix(~ 0 + x$samples$group)
 design
@@ -99,7 +99,7 @@ design
 colnames(design) <- levels(x$samples$group)
 design
 
-#### 2. VOOM
+##### 2. VOOM
 v_norm=voom(x,design,plot=T)
 v_norm
 v_norm1=v_norm$E
@@ -117,13 +117,13 @@ logCPM<-logCPM[,-c(19)] #The number in c( ) is the number of your samples +2
 head(logCPM)
 write.table(logCPM,file="logCPM.txt",sep="\t",quote=F,col.names=NA)
 
-###Calculate rpkm
+#####Calculate rpkm
 length<-read.csv("length.csv",header=T) 
 tags=rownames(x)
 tagsfile=cpm(x)[tags,]
 write.csv(tagsfile,file="cpm.csv")
 
-####Automated (for loop) to calculate RPKM
+#####Automated (for loop) to calculate RPKM
 #works only AFTER you generate logCPM file (see sections LIMMA DE Analysis and VOOM)
 headerNames<-"gene name" 
 logCPM<-read.table("logCPM.txt",header=T) 
@@ -136,7 +136,7 @@ for(i in 1:length(sampleFiles)){
 colnames(rpkm_data)<-headerNames 
 write.csv(rpkm_data,file="rpkm_data.csv") #writes file “rpkm_data.csv” which contains all RPKM data of samples with corresponding gene and sample names
 
-####DESeq2
+#####DESeq2
 library(DESeq2)
 countData <- read.csv('countdata.csv', header = TRUE, sep = ",")
 metaData <- read.csv('metadata.csv', header = TRUE, sep = ",")
